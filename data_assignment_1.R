@@ -26,3 +26,4 @@ ggplot(ma_stock_data, aes(x = date, y = adjusted)) +
   theme_minimal()
 
 #Q1c)
+#test
