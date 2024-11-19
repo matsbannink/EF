@@ -1,4 +1,5 @@
 #Q1a)
+# Install tidyquant to get Mastercard stock data
 install.packages("tidyquant")
 library(tidyquant)
 
@@ -8,22 +9,28 @@ ma_stock_data <- tq_get("MA",
                         to = "2024-01-16",
                         get = "stock.prices")
 
-# Save the data to a CSV file (optional)
+# Save the data to a CSV file
 write.csv(ma_stock_data, "MA_stock_data.csv", row.names = FALSE)
 
 #Q1b)
-# Load ggplot2 for visualization
+# Install ggplot2 for visualization
+install.packages("ggplot2")
 library(ggplot2)
 
 # Plot the Adjusted Closing Price over time
 ggplot(ma_stock_data, aes(x = date, y = adjusted)) +
-  geom_line(color = "blue", size = 1) +
+  geom_line(color = "blue", linewidth = 1) +
   labs(
-    title = "Mastercard stock price over time",
+    title = "Mastercard Stock Price",
     x = "Date",
-    y = "Adjusted closing price"
+    y = "Adjusted closing price ($)"
   ) +
   theme_minimal()
 
 #Q1c)
-#test
+# Calculate the simple and continuously compounded returns
+for (i in 2:nrow(ma_stock_data)) {
+  simple_returns[i-1] <- (ma_stock_data$adjusted[i] - ma_stock_data$adjusted[i-1])/ma_stock_data$adjusted[i-1]
+}
+
+print(simple_returns)
