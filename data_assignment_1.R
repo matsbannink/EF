@@ -11,9 +11,6 @@ ma_stock_data <- tq_get("MA",
                         to = "2024-01-16",
                         get = "stock.prices")
 
-# Save the data to a CSV file
-write.csv(ma_stock_data, "MA_stock_data.csv", row.names = FALSE)
-
 #Q1b)
 # Install ggplot2 for visualization
 
@@ -48,7 +45,7 @@ ggplot(ma_stock_data, aes(x = date, y = simple_returns)) +
   labs(
     title = "Simple Compounded Returns",
     x = "Date",
-    y = "Simple compounded returns ($)"
+    y = "Simple compounded returns "
   ) +
   theme_minimal()
 
@@ -58,7 +55,7 @@ ggplot(ma_stock_data, aes(x = date, y = continuous_returns )) +
   labs(
     title = "Continuously Compounded Returns ",
     x = "Date",
-    y = "Continuously compounded returns ($)"
+    y = "Continuously compounded returns "
   ) +
   theme_minimal()
 
