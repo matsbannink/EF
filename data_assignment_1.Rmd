@@ -11,6 +11,8 @@ install.packages("tidyquant")
 library(tidyquant)
 install.packages("ggplot2")
 library(ggplot2)
+install.packages("ugarchspec")
+library(ugarchspec)
 ```
 
 
@@ -215,4 +217,51 @@ lr_test_results <- data.frame(
 
 # Print the results
 print(lr_test_results)
+```
+
+
+Q4a)
+```{r}
+# Assuming `ma_stock_data` contains the daily simple returns column `simple_returns`
+investment <- 500
+
+# Find the first trading day in 2024
+first_2024_date <- "2024-01-02"
+first_2024_row <- which(ma_stock_data$date == first_2024_date)
+
+# Function to calculate VaR
+calculate_var <- function(returns, confidence_level, investment) {
+  sorted_returns <- sort(returns) # Sort returns in ascending order
+  cutoff_index <- ceiling((1 - confidence_level) * length(sorted_returns))
+  var <- sorted_returns[cutoff_index]
+  return(var * investment)
+}
+
+start_row_500 <- first_2024_row - 500
+start_row_700 <- first_2024_row - 700
+start_row_1000 <- first_2024_row - 1000
+
+# Subset historical returns for the last 500, 700, 1000 observations before the date
+returns_500 <- ma_stock_data$simple_returns[(start_row_500):(first_2024_row - 1)]
+returns_700 <- ma_stock_data$simple_returns[(start_row_700):(first_2024_row - 1)]
+returns_1000 <- ma_stock_data$simple_returns[(start_row_1000):(first_2024_row - 1)]
+
+start_date_500 <- ma_stock_data$date[start_row_500]
+start_date_700 <- ma_stock_data$date[start_row_700]
+start_date_1000 <- ma_stock_data$date[start_row_1000]
+
+
+# Compute VaR at 5% level
+var_500 <- calculate_var(returns_500, 0.05, investment)
+var_700 <- calculate_var(returns_700, 0.05, investment)
+var_1000 <- calculate_var(returns_1000, 0.05, investment)
+
+
+# Display the results
+cat("The date corresponding to 500 observations back is:", as.character(start_date_500), "\n")
+cat("VaR (500 observations): $", round(var_500, 2), "\n")
+cat("The date corresponding to 500 observations back is:", as.character(start_date_700), "\n")
+cat("VaR (700 observations): $", round(var_700, 2), "\n")
+cat("The date corresponding to 500 observations back is:", as.character(start_date_1000), "\n")
+cat("VaR (1000 observations): $", round(var_1000, 2), "\n")
 ```
