@@ -1,6 +1,6 @@
 ---
 title: "Empirical Finance Assignment 1"
-author: "Mats Bannink"
+author: "Mats Bannink, Felix Toutant, Nout van Nouhuys, Mas Fehmers"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
