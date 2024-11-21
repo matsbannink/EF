@@ -1,0 +1,212 @@
+---
+title: "Empirical Finance Assignment 1"
+author: "Mats Bannink"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+Install packages
+```{r}
+install.packages("tidyquant")
+library(tidyquant)
+install.packages("ggplot2")
+library(ggplot2)
+```
+
+
+
+Q1a)
+```{r}
+# Download historical stock data for Mastercard
+ma_stock_data <- tq_get("MA",
+                        from = "2012-01-01",
+                        to = "2024-01-16",
+                        get = "stock.prices")
+```
+
+
+Q1b)
+```{r}
+# Plot the Adjusted Closing Price over time
+ggplot(ma_stock_data, aes(x = date, y = adjusted)) +
+  geom_line(color = "blue", linewidth = 1) +
+  labs(
+    title = "Mastercard Stock Price",
+    x = "Date",
+    y = "Adjusted closing price ($)"
+  ) +
+  theme_minimal()
+```
+
+Q1c) and d)
+```{r}
+# Initialize a vector for simple and continuous returns
+simple_returns <- numeric(nrow(ma_stock_data) - 1)
+continuous_returns <- numeric(nrow(ma_stock_data) - 1)
+
+# Calculate the simple and continuously compounded returns and add them to the vector
+for (i in 2:nrow(ma_stock_data)) {
+  simple_returns[i-1] <- (ma_stock_data$adjusted[i] - ma_stock_data$adjusted[i-1])/ma_stock_data$adjusted[i-1]
+  continuous_returns[i-1] <- log(ma_stock_data$adjusted[i]/ma_stock_data$adjusted[i-1])
+}
+
+# Square the simple compounded returns
+simple_returns_squared <- simple_returns^2
+
+# Add simple and continuously compounded returns to the dataframe
+ma_stock_data$simple_returns <- c(0, simple_returns)
+ma_stock_data$continuous_returns <- c(0, continuous_returns)
+ma_stock_data$simple_returns_squared <- c(0, simple_returns_squared)
+
+
+#Plot simple compounded returns 
+ggplot(ma_stock_data, aes(x = date, y = simple_returns)) +
+  geom_line(color = "blue", linewidth = 1) +
+  labs(
+    title = "Simple Compounded Returns from Mastercard",
+    x = "Date",
+    y = "Simple compounded returns"
+  ) +
+  theme_minimal()
+
+#Plot continuously compounded returns 
+ggplot(ma_stock_data, aes(x = date, y = continuous_returns )) +
+  geom_line(color = "blue", linewidth = 1) +
+  labs(
+    title = "Continuously Compounded Returns from Mastercard",
+    x = "Date",
+    y = "Continuously compounded returns"
+  ) +
+  theme_minimal()
+
+# Create the ACF of the simple returns squared with 50 lags
+acf(ma_stock_data$simple_returns_squared, lag = 50, main = "ACF of Simple Compounded Returns Squared")
+```
+
+Q1e)
+```{r}
+# Perform a Ljung-Box Test with 10 and 20 lags
+Box.test(ma_stock_data$simple_returns_squared, lag = 10, type = c("Ljung-Box"))
+Box.test(ma_stock_data$simple_returns_squared, lag = 20, type = c("Ljung-Box"))
+
+#Q1f)
+# Making a QQ-plot for the simple compounded returns
+qqnorm(ma_stock_data$simple_returns,
+       main = "QQ-plot of simple returns", 
+       xlab = "Theoretical Quantiles", 
+       ylab = "Data Quantiles"
+       )
+qqline(ma_stock_data$simple_returns, col="red")
+```
+
+Q2a)
+```{r}
+# Use the continuously compounded returns, excluding the first observation (set to 0 earlier)
+returns <- ma_stock_data$continuous_returns[-1]
+
+# Define the AR(1)-ARCH(1) model specification
+spec <- ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 0)),  # ARCH(1)
+  mean.model = list(armaOrder = c(1, 0)),  # AR(1)
+  distribution.model = "norm"  # Assume normal distribution for residuals
+)
+
+# Fit the model
+fit <- ugarchfit(spec = spec, data = returns)
+
+# Display the model summary
+print(fit@fit$matcoef)
+```
+
+Q2b)
+```{r}
+# Compute residuals and conditional volatility from the AR(1)-ARCH(1) model
+arch_residuals <- residuals(fit)
+arch_vol <- sigma(fit)
+
+# Compute standardized residuals
+standardized_residuals <- arch_residuals / arch_vol
+
+# Perform the Jarque-Bera test on standardized residuals
+arch_jb_test <- jarque.bera.test(standardized_residuals)
+
+# Create a data frame for the test results
+arch_jb_results <- data.frame(
+  JB_Test_Statistic = round(arch_jb_test$statistic, 3),
+  Critical_Value = round(qchisq(0.95, df = 2), 3),  # Critical value at 95% confidence level for df = 2
+  P_Value = round(arch_jb_test$p.value, 3)
+)
+
+# Print the results
+print(arch_jb_results)
+```
+
+Q2c)
+```{r}
+# Define the AR(2)-GARCH(1,1) model specification
+ar2garch11_spec <- ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),  # GARCH(1,1)
+  mean.model = list(armaOrder = c(2, 0), include.mean = TRUE),   # AR(2)
+  distribution.model = "norm"  # Assuming normal distribution for residuals
+)
+
+# Fit the AR(2)-GARCH(1,1) model
+ar2garch11_fit <- ugarchfit(spec = ar2garch11_spec, data = returns)
+
+# Display the model summary
+print(ar2garch11_fit@fit$matcoef)
+
+```
+
+Q2d)
+```{r}
+# Compute residuals and conditional volatility from the AR(2)-GARCH(1,1) model
+garch_residuals <- residuals(ar2garch11_fit)
+garch_vol <- sigma(ar2garch11_fit)
+
+# Compute standardized residuals
+standardized_residuals <- garch_residuals / garch_vol
+
+# Perform the Jarque-Bera test on standardized residuals
+garch_jb_test <- jarque.bera.test(standardized_residuals)
+
+# Create a data frame for the JB test results
+garch_jb_results <- data.frame(
+  JB_Test_Statistic = round(garch_jb_test$statistic, 3),
+  Critical_Value = round(qchisq(0.95, df = 2), 3),  # Critical value at 95% confidence level for df = 2
+  P_Value = round(garch_jb_test$p.value, 3)
+)
+
+# Print the results
+print(garch_jb_results)
+```
+
+Q2e)
+```{r}
+# Extract log-likelihoods
+loglik_null <- likelihood(fit)
+loglik_alt <- likelihood(ar2garch11_fit)
+
+# Compute the likelihood ratio test statistic
+lr_stat <- 2 * (loglik_alt - loglik_null)
+
+# Degrees of freedom: Difference in the number of parameters
+df_null <- length(coef(fit))
+df_alt <- length(coef(ar2garch11_fit))
+df <- df_alt - df_null
+
+# Compute the p-value
+p_value <- pchisq(lr_stat, df = df, lower.tail = FALSE)
+
+# Display results in a data frame
+lr_test_results <- data.frame(
+  LogLikelihood_Null = round(loglik_null, 3),
+  LogLikelihood_Alt = round(loglik_alt, 3),
+  LR_Statistic = round(lr_stat, 3),
+  Degrees_of_Freedom = df,
+  P_Value = round(p_value, 3)
+)
+
+# Print the results
+print(lr_test_results)
+```
