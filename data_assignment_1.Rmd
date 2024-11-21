@@ -14,7 +14,6 @@ library(ggplot2)
 ```
 
 
-
 Q1a)
 ```{r}
 # Download historical stock data for Mastercard
@@ -37,6 +36,7 @@ ggplot(ma_stock_data, aes(x = date, y = adjusted)) +
   ) +
   theme_minimal()
 ```
+
 
 Q1c) and d)
 ```{r}
@@ -83,6 +83,7 @@ ggplot(ma_stock_data, aes(x = date, y = continuous_returns )) +
 acf(ma_stock_data$simple_returns_squared, lag = 50, main = "ACF of Simple Compounded Returns Squared")
 ```
 
+
 Q1e)
 ```{r}
 # Perform a Ljung-Box Test with 10 and 20 lags
@@ -98,6 +99,7 @@ qqnorm(ma_stock_data$simple_returns,
        )
 qqline(ma_stock_data$simple_returns, col="red")
 ```
+
 
 Q2a)
 ```{r}
@@ -117,6 +119,7 @@ fit <- ugarchfit(spec = spec, data = returns)
 # Display the model summary
 print(fit@fit$matcoef)
 ```
+
 
 Q2b)
 ```{r}
@@ -141,6 +144,7 @@ arch_jb_results <- data.frame(
 print(arch_jb_results)
 ```
 
+
 Q2c)
 ```{r}
 # Define the AR(2)-GARCH(1,1) model specification
@@ -157,6 +161,7 @@ ar2garch11_fit <- ugarchfit(spec = ar2garch11_spec, data = returns)
 print(ar2garch11_fit@fit$matcoef)
 
 ```
+
 
 Q2d)
 ```{r}
@@ -180,6 +185,7 @@ garch_jb_results <- data.frame(
 # Print the results
 print(garch_jb_results)
 ```
+
 
 Q2e)
 ```{r}
